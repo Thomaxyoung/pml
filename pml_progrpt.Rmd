@@ -1,0 +1,65 @@
+
+#Use Stochastic Gradient Boosting Model to Identify Actions
+##Thomax Young
+###Sat May 23 2015
+
+##1.Introduction
+
+In the data set, six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
+Read more:<http://groupware.les.inf.puc-rio.br/har#ixzz3axyUC7Si>
+
+
+##2.Explotory data anlysis and preprocessing
+
+make sure to put the data in your working directory.
+
+```{r}
+pmltrain <- read.csv("pml-training.csv", na.strings=c("NA",""), header=TRUE)
+pmltest <- read.csv("pml-testing.csv", na.strings=c("NA",""), header=TRUE)
+
+dim(training)
+table(training$classe)
+```
+
+some of the variable were used to provide information but not useful in modeling, so we can remove them and perform some pre-processing. remove the first 7 variables namely, "X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window".
+
+if we check the cols with NAs, we will find that in many columns, there are over 0.9793089 of the data are NAs. These may contain very important information but since the share the same percentage throughout all the columns, we can remove them.
+
+```{r, results='hide'}
+col<-colMeans(is.na(pmltrain))>.95
+training<-pmltrain[,!col][,-c(1:7)]
+testing<-pmltest[,!col][,-c(1:7)]
+```
+
+
+##3.Prediction study design
+
+The model will identify 5 different kind of action, so the tree model seems to be a promising choice. We chose boosting with trees, the Stochastic Gradient Boosting model. In the caret packages train function, chose method="gbm"
+
+The training data set is relatively large, We use the default training and testing set from the project data. 
+
+##4.Model and prediction 
+
+**the bootsraping mechanism within the Stochastic Gradient Boosting model will provide coss-validation.**
+
+```{r,cache=TRUE, eval=TRUE}
+#you have to load the pakages in rmd too
+#The model cost about 30 mins to train in a #fairly fast computer.
+library(caret)
+set.seed(1213)
+mod<-train(classe~., data=training, method="gbm", verbose=FALSE)
+mod
+```
+
+Now we can use the model to predict the testing data.
+
+```{r}
+
+answers<-predict(mod, newdata=testing)
+
+```
+
+**The accuracy of this mod is about .96, that means the error rate is .04. We expect the out of sample error rate will be higher.**
+
+According to the result of project submission, the answers are 100% right.The probability of this event is 0.44, just means I get lucky.  
